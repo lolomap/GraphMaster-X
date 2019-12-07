@@ -128,20 +128,27 @@ namespace GraphMaster_X.ViewModels
 
         public EditorVM()
         {
+
+            #region DefaultValues
+
             WindowTitle = DefaultWindowTitle;
             CurrentGraph = new Graph();
-            ControlerEnventHandler.ShowWindowEvent += LoadGraph;
             IsNameInputShow = Visibility.Hidden;
             IsInput = false;
-
             PointChoosed = true;
 
+            #endregion
+
+            #region EventInitialize
+
+            ControlerEnventHandler.ShowWindowEvent += LoadGraph;
+            
             EditorM.SetNameInputVisEvent += IsNameInputShowSetter;
             EditorM.SetNameInputPosEvent += NameInputPosSetter;
             EditorM.SetIsInputEvent += IsInputSetter;
 
-            PointModeCmd = new RelayCommand<GraphEditMode>(param => Mode = GraphEditMode.Point);
-            LineModeCmd = new RelayCommand<GraphEditMode>(param => Mode = GraphEditMode.Line);
+            PointNameInputingEvent += EditorM.PointNameInputing;
+            LineNameInputingEvent += EditorM.LineNameInputing;
 
             Model.FileSavedEvent += () => WindowTitle = DefaultWindowTitle + " ("
                                             + CurrentGraph.ShortFileName + ")";
@@ -151,19 +158,53 @@ namespace GraphMaster_X.ViewModels
                     WindowTitle = DefaultWindowTitle + " *";
                 else WindowTitle = DefaultWindowTitle + " (" + CurrentGraph.ShortFileName + "*)";
             };
+            Model.FileOpenedEvent += BuildOpenedGraph;
+
+            #endregion
+
+            #region CommandInitialize
+
+            PointModeCmd = new RelayCommand<GraphEditMode>(param => Mode = GraphEditMode.Point);
+            LineModeCmd = new RelayCommand<GraphEditMode>(param => Mode = GraphEditMode.Line);
+            
             SaveGraphAs = new RelayCommand<Graph>(param => Model.SaveGraphAs(CurrentGraph));
             SaveGraph = new RelayCommand<Graph>(param => Model.SaveGraph(CurrentGraph));
-
             OpenGraph = new RelayCommand(Model.OpenGraph);
 
-            PointNameInputingEvent += EditorM.PointNameInputing;
-            LineNameInputingEvent += EditorM.LineNameInputing;
+            #endregion
+
         }
 
         private void LoadGraph(int id)
         {
             if (id == 1)
                 CurrentGraph = (Graph)WindowControler.windowsParams[0];
+        }
+
+        private void BuildOpenedGraph(Graph graph)
+        {
+            CurrentGraph.FileName = graph.FileName;
+            CurrentGraph.ShortFileName = graph.ShortFileName;
+
+            CurrentGraph.points.Clear();
+            CurrentGraph.lines.Clear();
+            CurrentGraph.weights.Clear();
+            
+            foreach (var point in graph.points)
+            {
+                CurrentGraph.SetPoint(point.X, point.Y, point.Name);
+                PointNamePlacementEvent(point.Name, new Point(point.X, point.Y));
+            }
+            foreach (var line in graph.lines)
+            {
+                Weight weight = Weight.GetWeightByLine(line.ID, graph.weights);
+                CurrentGraph.SetLine(line.PointID1, line.PointID2, weight);
+                Point pos1 = new Point(GraphPoint.GetPointByID(line.PointID1, graph.points).X,
+                    GraphPoint.GetPointByID(line.PointID1, graph.points).Y);
+                Point pos2 = new Point(GraphPoint.GetPointByID(line.PointID2, graph.points).X,
+                    GraphPoint.GetPointByID(line.PointID2, graph.points).Y);
+                PointNamePlacementEvent(weight.Value.ToString(), Weight.CalculatePos(pos1, pos2));
+            }
         }
 
         #region Events

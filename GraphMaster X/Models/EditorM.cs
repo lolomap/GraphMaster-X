@@ -88,7 +88,8 @@ namespace GraphMaster_X.Models
             {
                 string fileName = openFileDialog.FileName;
                 string ext = openFileDialog.SafeFileName.Substring(openFileDialog.SafeFileName.IndexOf('.') + 1);
-                Graph.LoadGraph(fileName, ext);
+                Graph graph = Graph.LoadGraph(fileName, ext);
+                FileOpenedEvent(graph);
             }
         }
 
@@ -116,6 +117,10 @@ namespace GraphMaster_X.Models
         public delegate void FileNotSavedEventHandler();
         public event FileNotSavedEventHandler FileNotSavedEvent;
         public void CallFileNotSavedEvent() { FileNotSavedEvent(); }
+
+        public delegate void FileOpenedEventHandler(Graph graph);
+        public event FileOpenedEventHandler FileOpenedEvent;
+        
         #endregion
 
     }

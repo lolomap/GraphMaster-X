@@ -28,6 +28,7 @@ namespace GraphMaster_X.Views
         Point TempPointData;
         Line TempLineData;
 
+        //TODO: вынести установку точек и линий в ивент для использования в других классах
         private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (isPointNameInputing || isLineNameInputing)
@@ -118,7 +119,7 @@ namespace GraphMaster_X.Views
 
         private void GraphPropInput_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+            if (e.Key == Key.Enter && GraphPropInput.Text != string.Empty)
             {
                 if (isPointNameInputing)
                 {

@@ -47,6 +47,16 @@ namespace GraphMaster_X.Classes
             }
             return null;
         }
+
+        public static GraphPoint GetPointByID(int ID, List<GraphPoint> points)
+        {
+            foreach (var point in points)
+            {
+                if (point.ID == ID)
+                    return point;
+            }
+            return null;
+        }
     }
     [Serializable]
     public class GraphLine
@@ -197,6 +207,11 @@ namespace GraphMaster_X.Classes
             {
                 weights.Add(new Weight(line.ID, weight.Value));
             }
+        }
+        public void SetLine(int ID1, int ID2, Weight weight)
+        {
+            lines.Add(new GraphLine(ID1, ID2));
+            weights.Add(weight);
         }
         public void RemoveLine(string p1, string p2)
         {
