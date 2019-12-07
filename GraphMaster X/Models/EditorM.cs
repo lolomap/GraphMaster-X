@@ -49,19 +49,16 @@ namespace GraphMaster_X.Models
                 {
                     string fileName = saveFileDialog.FileName;
                     graph.FileName = fileName;
-                    var x = fileName.Split('\\');
-                    graph.ShortFileName = x[x.Length - 1];
-                    graph.SaveGraph(fileName);
+                    string ext = saveFileDialog.SafeFileName.Substring(saveFileDialog.SafeFileName.IndexOf('.') + 1);
+                    graph.ShortFileName = saveFileDialog.SafeFileName;
+                    graph.SaveGraph(fileName, ext);
                     FileSavedEvent();
                 }
             }
             else
             {
-                string fileName = graph.FileName;
-                graph.FileName = fileName;
-                var x = fileName.Split('\\');
-                graph.ShortFileName = x[x.Length - 1];
-                graph.SaveGraph(fileName);
+                string ext = graph.ShortFileName.Substring(graph.ShortFileName.IndexOf('.') + 1);
+                graph.SaveGraph(graph.FileName, ext);
                 FileSavedEvent();
             }
 
@@ -76,13 +73,25 @@ namespace GraphMaster_X.Models
             {
                 string fileName = saveFileDialog.FileName;
                 graph.FileName = fileName;
-                var x = fileName.Split('\\');
-                graph.ShortFileName = x[x.Length - 1];
-                graph.SaveGraph(fileName);
+                graph.ShortFileName = saveFileDialog.SafeFileName;
+                string ext = saveFileDialog.SafeFileName.Substring(saveFileDialog.SafeFileName.IndexOf('.') + 1);
+                graph.SaveGraph(fileName, ext);
                 FileSavedEvent();
             }
         }
        
+        public void OpenGraph()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Графы (*.xml;*.dat)|*.xml;*.dat";
+            if(openFileDialog.ShowDialog() == true)
+            {
+                string fileName = openFileDialog.FileName;
+                string ext = openFileDialog.SafeFileName.Substring(openFileDialog.SafeFileName.IndexOf('.') + 1);
+                Graph.LoadGraph(fileName, ext);
+            }
+        }
+
         #endregion
 
         public EditorM()

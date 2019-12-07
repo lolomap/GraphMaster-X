@@ -122,6 +122,8 @@ namespace GraphMaster_X.ViewModels
 
         public ICommand SaveGraph { get; private set; }
         public ICommand SaveGraphAs { get; private set; }
+
+        public ICommand OpenGraph { get; private set; }
         #endregion
 
         public EditorVM()
@@ -151,6 +153,8 @@ namespace GraphMaster_X.ViewModels
             };
             SaveGraphAs = new RelayCommand<Graph>(param => Model.SaveGraphAs(CurrentGraph));
             SaveGraph = new RelayCommand<Graph>(param => Model.SaveGraph(CurrentGraph));
+
+            OpenGraph = new RelayCommand(Model.OpenGraph);
 
             PointNameInputingEvent += EditorM.PointNameInputing;
             LineNameInputingEvent += EditorM.LineNameInputing;

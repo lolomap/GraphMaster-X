@@ -38,7 +38,7 @@
         <Menu Background="#4E4E4E" Foreground="White">
 
             <MenuItem Header="File" Background="#3E3E3E">
-                <MenuItem Header="Open" Background="#3E3E3E"/>
+                <MenuItem Header="Open" Background="#3E3E3E" Command="{Binding OpenGraph}"/>
                 <Separator />
                 <MenuItem Header="Save" Background="#3E3E3E" Command="{Binding SaveGraph}"/>
                 <MenuItem Header="Save as" Background="#3E3E3E" Command="{Binding SaveGraphAs}"/>

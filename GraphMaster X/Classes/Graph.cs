@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Xml.Serialization;
 
 namespace GraphMaster_X.Classes
 {
@@ -217,29 +218,47 @@ namespace GraphMaster_X.Classes
 
 
         #region FileIO
+
+
         [Serializable]
         public class GraphPropsFields : PropsFields
         {
             public Graph prop = null;
         }
-        BinProps<GraphPropsFields> GraphIOBin = new BinProps<GraphPropsFields>();
-        XmlProps<GraphPropsFields> GraphIOXml = new XmlProps<GraphPropsFields>();
-        public void SaveGraph(string fileName)
+        static BinProps<GraphPropsFields> GraphIOBin = new BinProps<GraphPropsFields>();
+        static XmlProps<GraphPropsFields> GraphIOXml = new XmlProps<GraphPropsFields>();
+        public void SaveGraph(string fileName, string ext)
         {
-            var fn = fileName.Split('.');
-            if (fn[fn.Length - 1] == "dat")
+            if (ext == "dat")
             {
                 GraphIOBin.Fields.BinFileName = fileName;
                 GraphIOBin.Fields.prop = this;
                 GraphIOBin.WriteBin();
             }
-            else if (fn[fn.Length - 1] == "xml")
+            else if (ext == "xml")
             {
+                //TODO: Починить чертово сохранение в XML (какието проблемы с xmlns но я хз)
                 GraphIOXml.Fields.XMLFileName = fileName;
                 GraphIOXml.Fields.prop = this;
                 GraphIOXml.WriteXml();
 
             }
+        }
+        public static Graph LoadGraph(string fileName, string ext)
+        {
+            if (ext == "dat")
+            {
+                GraphIOBin.Fields.BinFileName = fileName;
+                GraphIOBin.ReadBin();
+                return GraphIOBin.Fields.prop;
+            }
+            else if (ext == "xml")
+            {
+                GraphIOXml.Fields.XMLFileName = fileName;
+                GraphIOXml.ReadXml();
+                return GraphIOXml.Fields.prop;
+            }
+            else return null;
         }
 
 

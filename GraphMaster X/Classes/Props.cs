@@ -69,7 +69,7 @@ namespace GraphMaster_X.Classes
         //Чтение насроек из файла
         public void ReadXml()
         {
-            if (File.Exists(Fields.BinFileName))
+            if (File.Exists(Fields.XMLFileName))
             {
                 XmlSerializer ser = new XmlSerializer(typeof(PropsFields));
                 TextReader reader = new StreamReader(Fields.XMLFileName);
