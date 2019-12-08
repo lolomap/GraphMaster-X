@@ -8,25 +8,23 @@ namespace GraphMaster_X.Models
     {
         XmlSerializer serializer = new XmlSerializer(typeof(Graph));
 
+        
+
         public void OpenFile()
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            if (openFileDialog.ShowDialog() == true)
-            {
-                string fileName = openFileDialog.FileName;
-
-
-
-
-                ControlerEnventHandler.CallShowWindow(1);
-                ControlerEnventHandler.CallCloseWindow(0);
-            }
+            Graph graph = new Graph();
+            WindowControler.windowsParams.Add(graph);
+            WindowControler.windowsParams.Add(WindowControler.EditorOpenParams.OPEN);
+            WindowControler.CallParamsUpdatedEvent();
+            ControlerEnventHandler.CallShowWindow(1);
+            ControlerEnventHandler.CallCloseWindow(0);
         }
 
         public void Create()
         {
             Graph graph = new Graph();
             WindowControler.windowsParams.Add(graph);
+            WindowControler.windowsParams.Add(WindowControler.EditorOpenParams.NO);
             ControlerEnventHandler.CallShowWindow(1);
             ControlerEnventHandler.CallCloseWindow(0);
         }

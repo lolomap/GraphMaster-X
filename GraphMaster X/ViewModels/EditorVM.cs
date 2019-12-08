@@ -128,6 +128,7 @@ namespace GraphMaster_X.ViewModels
 
         public EditorVM()
         {
+            WindowControler.ParamsUpdatedEvent += LoadGraph;
 
             #region DefaultValues
 
@@ -141,7 +142,7 @@ namespace GraphMaster_X.ViewModels
 
             #region EventInitialize
 
-            ControlerEnventHandler.ShowWindowEvent += LoadGraph;
+            ControlerEnventHandler.ShowWindowEvent += CreateGraph;
             
             EditorM.SetNameInputVisEvent += IsNameInputShowSetter;
             EditorM.SetNameInputPosEvent += NameInputPosSetter;
@@ -175,10 +176,26 @@ namespace GraphMaster_X.ViewModels
 
         }
 
-        private void LoadGraph(int id)
+        public void CreateGraph(int id)
         {
             if (id == 1)
                 CurrentGraph = (Graph)WindowControler.windowsParams[0];
+        }
+
+        public void LoadGraph()
+        {
+            WindowControler.EditorOpenParams editorOpenParam = WindowControler.EditorOpenParams.NO;
+            foreach(var windowParam in WindowControler.windowsParams)
+            {
+                if(windowParam.GetType() == typeof(WindowControler.EditorOpenParams))
+                {
+                    editorOpenParam = (WindowControler.EditorOpenParams)windowParam;
+                }
+            }
+            if(editorOpenParam == WindowControler.EditorOpenParams.OPEN)
+            {
+                Model.OpenGraph();
+            }
         }
 
         private void BuildOpenedGraph(Graph graph)
@@ -193,6 +210,7 @@ namespace GraphMaster_X.ViewModels
             foreach (var point in graph.points)
             {
                 CurrentGraph.SetPoint(point.X, point.Y, point.Name);
+                PaintEvents.CallPaintPointEvent(new Point(point.X, point.Y));
                 PointNamePlacementEvent(point.Name, new Point(point.X, point.Y));
             }
             foreach (var line in graph.lines)
@@ -203,8 +221,11 @@ namespace GraphMaster_X.ViewModels
                     GraphPoint.GetPointByID(line.PointID1, graph.points).Y);
                 Point pos2 = new Point(GraphPoint.GetPointByID(line.PointID2, graph.points).X,
                     GraphPoint.GetPointByID(line.PointID2, graph.points).Y);
-                PointNamePlacementEvent(weight.Value.ToString(), Weight.CalculatePos(pos1, pos2));
+                if(weight != null)
+                    PointNamePlacementEvent(weight.Value.ToString(), Weight.CalculatePos(pos1, pos2));
+                PaintEvents.CallPaintLineEvent(pos1, pos2);
             }
+            Model.CallFileNotSavedEvent();
         }
 
         #region Events

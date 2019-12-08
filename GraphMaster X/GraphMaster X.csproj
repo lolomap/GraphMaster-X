@@ -82,6 +82,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Classes\PaintEvents.cs" />
     <Compile Include="Classes\Props.cs" />
     <Compile Include="Classes\WindowControler.cs" />
     <Compile Include="Classes\Graph.cs" />

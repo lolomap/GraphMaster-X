@@ -84,7 +84,7 @@ namespace GraphMaster_X.Models
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Графы (*.xml;*.dat)|*.xml;*.dat";
-            if(openFileDialog.ShowDialog() == true)
+            if (openFileDialog.ShowDialog() == true)
             {
                 string fileName = openFileDialog.FileName;
                 string ext = openFileDialog.SafeFileName.Substring(openFileDialog.SafeFileName.IndexOf('.') + 1);

@@ -6,6 +6,16 @@ namespace GraphMaster_X.Classes
 {
     public class WindowControler
     {
+        public enum EditorOpenParams
+        {
+            NO,
+            OPEN
+        }
+
+        public delegate void ParamsUpdatedEventHandler();
+        public static event ParamsUpdatedEventHandler ParamsUpdatedEvent;
+        public static void CallParamsUpdatedEvent() { ParamsUpdatedEvent(); }
+
         public static List<object> windowsParams = new List<object>();
         public Dictionary<int, Window> windows { get; private set; } = new Dictionary<int, Window>();
         public int IdCount { get; private set; } = -1;

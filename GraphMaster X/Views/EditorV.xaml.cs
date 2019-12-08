@@ -18,6 +18,8 @@ namespace GraphMaster_X.Views
         public EditorV()
         {
             InitializeComponent();
+            PaintEvents.PainPointEvent += PaintPoint;
+            PaintEvents.PaintLineEvent += PaintLine;
             DataContext = ViewModel;
             ViewModel.PointNamePlacementEvent += SetTextOnCanvas;
         }
@@ -28,7 +30,42 @@ namespace GraphMaster_X.Views
         Point TempPointData;
         Line TempLineData;
 
-        //TODO: вынести установку точек и линий в ивент для использования в других классах
+        private void PaintPoint(Point pos)
+        {
+            Ellipse point = new Ellipse
+            {
+                Height = 15,
+                Width = 15,
+                Stroke = Brushes.Black,
+                Fill = Brushes.White,
+                StrokeThickness = 3
+            };
+            Scene.Children.Add(point);
+            Canvas.SetLeft(point, pos.X);
+            Canvas.SetTop(point, pos.Y);
+            Panel.SetZIndex(point, 1);
+        }
+
+        private Line PaintLine(Point savedPoint, Point point)
+        {
+            Line line = new Line
+            {
+                X1 = savedPoint.X + 5,
+                Y1 = savedPoint.Y + 5,
+
+                X2 = point.X + 5,
+                Y2 = point.Y + 5,
+
+                Stroke = Brushes.Black,
+                StrokeThickness = 3
+            };
+
+            Scene.Children.Add(line);
+            Panel.SetZIndex(line, 0);
+
+            return line;
+        }
+
         private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (isPointNameInputing || isLineNameInputing)
@@ -38,18 +75,7 @@ namespace GraphMaster_X.Views
             double y = Mouse.GetPosition(Scene).Y;
             if (ViewModel.Mode == GraphEditMode.Point)
             {
-                Ellipse point = new Ellipse
-                {
-                    Height = 15,
-                    Width = 15,
-                    Stroke = Brushes.Black,
-                    Fill = Brushes.White,
-                    StrokeThickness = 3
-                };
-                Scene.Children.Add(point);
-                Canvas.SetLeft(point, x);
-                Canvas.SetTop(point, y);
-                Panel.SetZIndex(point, 1);
+                PaintPoint(new Point(x, y));
 
                 isPointNameInputing = true;
                 ViewModel.CallPointNameInputingEvent(new Point(x, y));
@@ -86,20 +112,9 @@ namespace GraphMaster_X.Views
                     {
                         if (point.IsMouseOver && point != savedPoint)
                         {
-                            Line line = new Line
-                            {
-                                X1 = Canvas.GetLeft(savedPoint) + 5,
-                                Y1 = Canvas.GetTop(savedPoint) + 5,
-
-                                X2 = Canvas.GetLeft(point) + 5,
-                                Y2 = Canvas.GetTop(point) + 5,
-
-                                Stroke = Brushes.Black,
-                                StrokeThickness = 3
-                            };
-
-                            Scene.Children.Add(line);
-                            Panel.SetZIndex(line, 0);
+                            Point p1 = new Point(Canvas.GetLeft(savedPoint), Canvas.GetTop(savedPoint));
+                            Point p2 = new Point(Canvas.GetLeft(point), Canvas.GetTop(point));
+                            Line line = PaintLine(p1, p2);
 
                             isLineNameInputing = true;
                             ViewModel.CallLineNameInputingEvent
@@ -119,9 +134,9 @@ namespace GraphMaster_X.Views
 
         private void GraphPropInput_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter && GraphPropInput.Text != string.Empty)
+            if (e.Key == Key.Enter)
             {
-                if (isPointNameInputing)
+                if (isPointNameInputing && GraphPropInput.Text != string.Empty)
                 {
                     ViewModel.CallInputCompleteEvent(TempPointData);
                     GraphPropInput.Text = "";
