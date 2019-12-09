@@ -179,7 +179,7 @@ namespace GraphMaster_X.ViewModels
         public void CreateGraph(int id)
         {
             if (id == 1)
-                CurrentGraph = (Graph)WindowControler.windowsParams[0];
+                BuildOpenedGraph((Graph)WindowControler.windowsParams[0]);
         }
 
         public void LoadGraph()
