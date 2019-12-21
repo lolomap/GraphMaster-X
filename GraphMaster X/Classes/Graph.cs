@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
-using System.Xml.Serialization;
+
 
 namespace GraphMaster_X.Classes
 {
@@ -56,6 +56,18 @@ namespace GraphMaster_X.Classes
                     return point;
             }
             return null;
+        }
+
+        public List<GraphLine> GetLines(List<GraphLine> graphLines)
+        {
+            List<GraphLine> result = new List<GraphLine>();
+            foreach(var line in graphLines)
+            {
+                if (line.PointID1 == ID || line.PointID2 == ID)
+                    result.Add(line);
+            }
+
+            return result;
         }
     }
     [Serializable]
@@ -134,12 +146,16 @@ namespace GraphMaster_X.Classes
     [Serializable]
     public class Graph
     {
+        bool IsDirectional = false;
+
         public string FileName = null;
         public string ShortFileName = null;
 
         public List<GraphPoint> points = new List<GraphPoint>();
         public List<GraphLine> lines = new List<GraphLine>();
         public List<Weight> weights = new List<Weight>();
+
+        
 
         #region Events
         public delegate void PointSettedEventHandler(double x, double y, string name, Graph graph);
@@ -278,6 +294,68 @@ namespace GraphMaster_X.Classes
 
 
         #endregion
+
+        #region Algorithms
+        Dictionary<GraphPoint, bool> used = new Dictionary<GraphPoint, bool>();
+        bool dfs(GraphPoint u, GraphPoint p = null)
+        {
+            used[u] = true;
+
+            GraphPoint w = new GraphPoint();
+
+            foreach(var line in u.GetLines(lines))
+            {
+                if (line.PointID1 == u.ID)
+                {
+                    w = GraphPoint.GetPointByID(line.PointID2, points);
+                }
+                else if (line.PointID2 == u.ID)
+                {
+                    w = GraphPoint.GetPointByID(line.PointID1, points);
+                }
+
+                if(!used[w])
+                {
+                    if (dfs(w, u))
+                        return true;
+                }
+                else if (w != p)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool IsCycled()
+        {
+            foreach(var point in points)
+            {
+                used[point] = false;
+            }
+            if(!IsDirectional)
+            {
+                foreach(var point in points)
+                {
+                    if(!used[point])
+                    {
+                        if (dfs(point))
+                            return true;
+                    }
+                }
+
+
+            }
+
+
+
+            return false;
+        }
+
+
+
+        #endregion
+
 
     }
 

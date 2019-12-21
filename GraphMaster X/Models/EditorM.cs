@@ -91,6 +91,7 @@ namespace GraphMaster_X.Models
                 Graph graph = Graph.LoadGraph(fileName, ext);
                 FileOpenedEvent(graph);
             }
+            
         }
 
         #endregion
