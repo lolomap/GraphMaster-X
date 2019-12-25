@@ -28,6 +28,14 @@ namespace GraphMaster_X.Classes
             ID = IDsCount++;
         }
 
+        public GraphPoint(double x, double y)
+        {
+            this.X = x;
+            this.Y = y;
+            this.Name = "";
+            ID = IDsCount++;
+        }
+
         public static GraphPoint GetPointByName(string name, List<GraphPoint> points)
         {
             foreach (var point in points)
@@ -61,13 +69,39 @@ namespace GraphMaster_X.Classes
         public List<GraphLine> GetLines(List<GraphLine> graphLines)
         {
             List<GraphLine> result = new List<GraphLine>();
-            foreach(var line in graphLines)
+            foreach (var line in graphLines)
             {
                 if (line.PointID1 == ID || line.PointID2 == ID)
                     result.Add(line);
             }
 
             return result;
+        }
+
+        public void SetCoordinates(Point p)
+        {
+            X = p.X;
+            Y = p.Y;
+        }
+
+        public Point GetCoordinates()
+        {
+            return new Point(X, Y);
+        }
+
+        public static GraphLine GetFarthestPoints(List<GraphLine> lines, List<GraphPoint> points)
+        {
+            GraphLine resultLine = null;
+            double maxLength = 0;
+            foreach(var line in lines)
+            {
+                if(line.GetLength(points) > maxLength)
+                {
+                    maxLength = line.GetLength(points);
+                    resultLine = line;
+                }
+            }
+            return resultLine;
         }
     }
     [Serializable]
@@ -98,6 +132,13 @@ namespace GraphMaster_X.Classes
                     return line;
             }
             return null;
+        }
+
+        public double GetLength(List<GraphPoint> points)
+        {
+            GraphPoint p1 = GraphPoint.GetPointByID(PointID1, points);
+            GraphPoint p2 = GraphPoint.GetPointByID(PointID2, points);
+            return Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p2.Y, 2));
         }
     }
     [Serializable]
@@ -155,7 +196,7 @@ namespace GraphMaster_X.Classes
         public List<GraphLine> lines = new List<GraphLine>();
         public List<Weight> weights = new List<Weight>();
 
-        
+
 
         #region Events
         public delegate void PointSettedEventHandler(double x, double y, string name, Graph graph);
@@ -184,6 +225,10 @@ namespace GraphMaster_X.Classes
             GraphPoint p = GraphPoint.GetPointByName(name, points);
             if (p != null)
                 points.Remove(p);
+        }
+        public void RemovePoint(GraphPoint point)
+        {
+            points.Remove(point);
         }
         public void RenamePoint(string current, string updated)
         {
@@ -229,6 +274,15 @@ namespace GraphMaster_X.Classes
             lines.Add(new GraphLine(ID1, ID2));
             weights.Add(weight);
         }
+        public void SetLine(int ID1, int ID2, double? weight = null)
+        {
+            if (weight != null)
+            {
+                GraphLine line = new GraphLine(ID1, ID2);
+                lines.Add(line);
+                weights.Add(new Weight(line.ID, weight.Value));
+            }
+        }
         public void RemoveLine(string p1, string p2)
         {
             GraphPoint P1 = GraphPoint.GetPointByName(p1, points);
@@ -244,6 +298,10 @@ namespace GraphMaster_X.Classes
                     weights.Remove(weight);
             }
 
+        }
+        public void RemoveLine(GraphLine line)
+        {
+            lines.Remove(line);
         }
         #endregion
 
@@ -303,7 +361,7 @@ namespace GraphMaster_X.Classes
 
             GraphPoint w = new GraphPoint();
 
-            foreach(var line in u.GetLines(lines))
+            foreach (var line in u.GetLines(lines))
             {
                 if (line.PointID1 == u.ID)
                 {
@@ -314,7 +372,7 @@ namespace GraphMaster_X.Classes
                     w = GraphPoint.GetPointByID(line.PointID1, points);
                 }
 
-                if(!used[w])
+                if (!used[w])
                 {
                     if (dfs(w, u))
                         return true;
@@ -329,15 +387,15 @@ namespace GraphMaster_X.Classes
 
         public bool IsCycled()
         {
-            foreach(var point in points)
+            foreach (var point in points)
             {
                 used[point] = false;
             }
-            if(!IsDirectional)
+            if (!IsDirectional)
             {
-                foreach(var point in points)
+                foreach (var point in points)
                 {
-                    if(!used[point])
+                    if (!used[point])
                     {
                         if (dfs(point))
                             return true;
@@ -352,7 +410,123 @@ namespace GraphMaster_X.Classes
             return false;
         }
 
+        public static List<GraphPoint> GraphLaying(Graph graph, Point StartPoint, double length)
+        {
+            //Деревья рисуем через правильные треугольники
+            List<GraphPoint> result = new List<GraphPoint>();
 
+            if (!graph.IsCycled())
+            {
+                Dictionary<GraphPoint, int> pointLinesCount = new Dictionary<GraphPoint, int>();
+                foreach (var point in graph.points)
+                {
+                    pointLinesCount[point] = point.GetLines(graph.lines).Count;
+                }
+                GraphPoint maxLinedPoint = new GraphPoint();
+                int count = graph.points.Count;
+                if (count > 0) maxLinedPoint = graph.points[0];
+                else return null;
+                int maxLines = 0;
+                foreach (var point in graph.points)
+                {
+                    //TODO: переделать для случая когда несколько точек с максмальным колиеством смежных
+                    if (pointLinesCount[point] >= maxLines)
+                    {
+                        maxLinedPoint = point;
+                        maxLines = pointLinesCount[point];
+                    }
+                }
+                maxLinedPoint.X = StartPoint.X;
+                maxLinedPoint.Y = StartPoint.Y;
+
+                result.Add(maxLinedPoint);
+
+                //TODO: напсиать расположние слоев для последующих точек
+                List<GraphPoint> neighbors = new List<GraphPoint>();
+                foreach(var line in maxLinedPoint.GetLines(graph.lines))
+                {
+                    if (line.PointID1 == maxLinedPoint.ID)
+                        neighbors.Add(GraphPoint.GetPointByID(line.PointID2, graph.points));
+                    else if (line.PointID2 == maxLinedPoint.ID)
+                        neighbors.Add(GraphPoint.GetPointByID(line.PointID1, graph.points));
+
+                }
+
+                if (neighbors.Count > 0)
+                    neighbors[0].SetCoordinates(
+                        new Point(StartPoint.X - length / 2, StartPoint.Y + Math.Sqrt(0.75) * length));
+                else goto otherPoints;
+                if (neighbors.Count > 1)
+                    neighbors[1].SetCoordinates(
+                        new Point(StartPoint.X + length / 2, StartPoint.Y + Math.Sqrt(0.75) * length));
+                else goto otherPoints;
+                if (neighbors.Count > 2)
+                    neighbors[2].SetCoordinates(
+                        new Point(StartPoint.X - length / 2, StartPoint.Y - Math.Sqrt(0.75) * length));
+                else goto otherPoints;
+                if (neighbors.Count > 3)
+                    neighbors[3].SetCoordinates(
+                        new Point(StartPoint.X + length / 2, StartPoint.Y - Math.Sqrt(0.75) * length));
+                else goto otherPoints;
+                if (neighbors.Count > 4)
+                    neighbors[4].SetCoordinates(new Point(StartPoint.X - length, StartPoint.Y));
+                else goto otherPoints;
+                if (neighbors.Count > 5)
+                    neighbors[5].SetCoordinates(new Point(StartPoint.X + length, StartPoint.Y));
+                result.AddRange(neighbors);
+
+                otherPoints:
+                if(count > 6)
+                {
+                    List<GraphPoint> otherNeighbors = new List<GraphPoint>();
+                    int i = 0;
+                    foreach(var p in neighbors)
+                    {
+                        if (i > 5)
+                            otherNeighbors.Add(p);
+                        i++;
+                    }
+                    i = 6;
+                    foreach(var p in otherNeighbors)
+                    {
+                        GraphLine l = GraphPoint.GetFarthestPoints(graph.lines, neighbors);
+                        GraphPoint p1 = GraphPoint.GetPointByID(l.PointID1, neighbors);
+                        GraphPoint p2 = GraphPoint.GetPointByID(l.PointID2, neighbors);
+
+                        p.X = (p1.X + p2.X) / 2;
+                        p.Y = (p1.Y + p2.Y) / 2;
+
+                        neighbors[i] = p;
+                        i++;
+                    }
+                    result.AddRange(otherNeighbors);
+                }
+                
+                foreach(var p in  neighbors)
+                {
+                    graph.RemovePoint(p);
+                }
+                List<GraphLine> usedLines = new List<GraphLine>();
+                foreach(var p in neighbors)
+                {
+                    foreach(var line in p.GetLines(graph.lines))
+                    {
+                        usedLines.Add(line);
+                    }
+                }
+                foreach (var line in usedLines)
+                    graph.RemoveLine(line);
+
+                //ОСТОРОЖНО РЕКУРСИЯ ДЛЯ ТОГО ЧТОБЫ СДЕЛАТЬ ТОЖЕ САМОЕ ДЛЯ ВСЕХ ВЕРШИН
+                foreach(var point in neighbors)
+                {
+                   result.AddRange(GraphLaying(graph, new Point(point.X, point.Y), length));
+                }
+            }
+
+
+            return result;
+        }
 
         #endregion
 

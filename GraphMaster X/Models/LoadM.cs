@@ -1,8 +1,10 @@
 ﻿using GraphMaster_X.Classes;
 using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
+using System.Windows;
 using System.Xml.Serialization;
 
 namespace GraphMaster_X.Models
@@ -57,39 +59,91 @@ namespace GraphMaster_X.Models
             var table = GetTable(fileName, "Таблица 1");
 
 
-            var s = table.Rows;
-            List<string> points = new List<string>();
-            foreach(DataRow row in s)
+            var rows = table.Rows;
+            List<string> RowPoints = new List<string>();
+            List<string> rowCaptions = new List<string>();
+            foreach(DataRow row in rows)
             {
-                points.Add((string)row.ItemArray[0]);
+                if (row.ItemArray[0].GetType() == typeof(DBNull))
+                { rowCaptions.Add(string.Empty); continue; }
+                rowCaptions.Add((string)row.ItemArray[0]);
             }
+            RowPoints.AddRange(rowCaptions);
 
-            var ss = table.Columns;
+            var columns = table.Columns;
             List<string> columnsCaptions = new List<string>();
-            int i = 0;
-            foreach(DataColumn column in ss)
+            List<string> ColumnPoints = new List<string>();
+            columns.RemoveAt(0);
+            foreach(DataColumn column in columns)
             {
-                if (i != 0)
-                    columnsCaptions.Add(column.Caption);
-                i++;
+                columnsCaptions.Add(column.Caption);
             }
-            points.AddRange(columnsCaptions);
-            
-            foreach(var point in points)
+            ColumnPoints.AddRange(columnsCaptions);
+
+
+            List<GraphPoint> rp = new List<GraphPoint>();
+            List<GraphPoint> cp = new List<GraphPoint>();
+
+            foreach(var point in RowPoints)
             {
                 GraphPoint p = new GraphPoint
                 {
-                    Name = (string)point,
+                    Name = point,
                     //TODO: Придумать адекватный алгоритм генерации положения точки
                     X = 0,
                     Y = 0
                 };
+                rp.Add(p);
+                graph.points.Add(p);
+            }
+            foreach (var point in ColumnPoints)
+            {
+                GraphPoint p = new GraphPoint
+                {
+                    Name = point,
+                    //TODO: Придумать адекватный алгоритм генерации положения точки
+                    X = 0,
+                    Y = 0
+                };
+                cp.Add(p);
                 graph.points.Add(p);
             }
 
+            //Врооде как это должно добавить линии соединения всех вершин если есть вес
+            //UPD: TODO: не работает, исправь
+            int i = 0;
+            foreach (DataRow row in rows)
+            {
+                List<string> rowContent = new List<string>();//((string[])row.ItemArray);
+                foreach(var k in row.ItemArray)
+                {
+                    if (k.GetType() != typeof(DBNull))
+                        rowContent.Add((string)k);
+                    else rowContent.Add(string.Empty);
+                }
+                rowContent.RemoveAt(0);
+
+                int j = 0;
+                foreach (var item in rowContent)
+                {
+                    if (item != string.Empty)
+                    {
+                        graph.SetLine(rp[i].ID, cp[j].ID, System.Convert.ToDouble(item));
+                        
+                    }
+
+                    j++;
+                }
+                i++;
+            }
+            //TODO: проверить работоспособность
+            List<GraphPoint> LayedPoints = Graph.GraphLaying(graph, new Point(300, 300), 50);
+            graph.points = LayedPoints;
 
             return graph;
         }
+
+        
 
         private DataTable GetTable(string fileName, string sheetName)
         {
@@ -97,8 +151,8 @@ namespace GraphMaster_X.Models
             DataSet DtSet;
             OleDbDataAdapter MyCommand;
 
-            MyConnection = new OleDbConnection(@"provider=Microsoft.Jet.OLEDB.4.0;Data Source=" +
-                                                fileName + ";Extended Properties=Excel 8.0;");
+            MyConnection = new OleDbConnection(@"provider=Microsoft.ACE.OLEDB.12.0;Data Source=" +
+                                                fileName + ";Extended Properties=\"excel 8.0;hdr=no;IMEX=1\";");
             MyCommand = new OleDbDataAdapter("select * from ["+sheetName+"$]", MyConnection);
             MyCommand.TableMappings.Add("Table", "Net");
             DtSet = new DataSet();
